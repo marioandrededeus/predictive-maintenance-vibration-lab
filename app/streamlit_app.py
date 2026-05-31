@@ -35,6 +35,23 @@ st.set_page_config(
 
 st.title("Predictive Maintenance Vibration Lab")
 
+st.info(
+    """
+This project explores how vibration analysis, signal processing and
+machine learning can support predictive maintenance in rotating machinery.
+
+Current examples include:
+
+• Normal operating condition
+
+• Spectral carpet patterns associated with lubrication starvation
+
+• Structural looseness characterized by harmonic and sub-harmonic behavior
+
+You can use the example datasets or upload your own vibration signal.
+"""
+)
+
 st.markdown(
     """
 An open project exploring vibration analysis,
@@ -51,6 +68,26 @@ dataset = st.sidebar.selectbox(
         "Structural Looseness",
         "Upload CSV",
     ],
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    """
+### Example datasets
+
+**Normal Condition**
+
+Baseline vibration signal.
+
+**Spectral Carpet**
+
+Broadband high-frequency energy increase.
+
+**Structural Looseness**
+
+Low-frequency harmonic and sub-harmonic behavior.
+"""
 )
 
 uploaded_file = None
