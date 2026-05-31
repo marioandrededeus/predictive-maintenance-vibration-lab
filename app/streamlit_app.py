@@ -25,6 +25,8 @@ from src.vibration_lab.visualization import (
     create_psd_figure,
 )
 
+from src.vibration_lab.data_loader import load_csv
+
 
 st.set_page_config(
     page_title="Predictive Maintenance Vibration Lab",
@@ -47,17 +49,62 @@ dataset = st.sidebar.selectbox(
         "Normal Condition",
         "Spectral Carpet",
         "Structural Looseness",
+        "Upload CSV",
     ],
 )
 
+uploaded_file = None
+
+if dataset == "Upload CSV":
+    uploaded_file = st.sidebar.file_uploader(
+        "Upload vibration data",
+        type=["csv"]
+    )
+
+    st.sidebar.markdown(
+        """
+Required columns:
+
+- timestamp
+- acceleration
+
+Optional columns:
+
+- rpm
+- velocity
+- label
+- axis
+"""
+    )
+
 if dataset == "Normal Condition":
+
     df = generate_normal_signal()
 
 elif dataset == "Spectral Carpet":
+
     df = generate_carpet_signal()
 
-else:
+elif dataset == "Structural Looseness":
+
     df = generate_looseness_signal()
+
+else:
+
+    if uploaded_file is None:
+
+        st.info(
+            "Upload a CSV file to start the analysis."
+        )
+
+        st.stop()
+
+    try:
+        df = load_csv(uploaded_file)
+
+    except Exception as e:
+        st.error(str(e))
+        st.stop()
 
 time = df["timestamp"].values
 signal = df["acceleration"].values
