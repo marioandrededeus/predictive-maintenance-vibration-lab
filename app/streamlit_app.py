@@ -27,6 +27,8 @@ from src.vibration_lab.visualization import (
 
 from src.vibration_lab.data_loader import load_csv
 
+from src.vibration_lab.carpet_detector import carpet_score
+
 
 st.set_page_config(
     page_title="Predictive Maintenance Vibration Lab",
@@ -158,11 +160,17 @@ frequencies_psd, psd = welch_psd(
     fs,
 )
 
-tab1, tab2, tab3 = st.tabs(
+carpet_score_value = carpet_score(
+    frequencies_fft,
+    magnitude_fft,
+)
+
+tab1, tab2, tab3, tab4 = st.tabs(
     [
         "Time Signal",
         "FFT Spectrum",
         "Welch PSD",
+        "Spectral Carpet",
     ]
 )
 
@@ -191,4 +199,52 @@ with tab3:
             psd,
         ),
         use_container_width=True,
+    )
+
+with tab4:
+    st.subheader("Spectral Carpet Detector")
+
+    st.metric(
+        "Carpet Score",
+        f"{carpet_score_value:.1f} / 100"
+    )
+
+    st.plotly_chart(
+        create_fft_figure(
+            frequencies_fft,
+            magnitude_fft,
+            title="FFT Spectrum Used for Carpet Scoring"
+        ),
+        use_container_width=True,
+    )
+
+    if carpet_score_value >= 50:
+        st.warning(
+            """
+High broadband energy content detected.
+
+This may indicate a spectral carpet-like pattern,
+commonly associated with lubrication starvation,
+friction-related behavior or distributed high-frequency excitation.
+"""
+        )
+    else:
+        st.success(
+            """
+No strong spectral carpet-like pattern detected.
+
+High-frequency broadband energy is not dominant in this signal.
+"""
+        )
+
+    st.markdown(
+        """
+### Interpretation
+
+The carpet score is based on the ratio between high-frequency spectral energy
+and total spectral energy.
+
+It is an explainable indicator designed for exploration,
+not a replacement for professional vibration analysis.
+"""
     )
