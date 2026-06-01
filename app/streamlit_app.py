@@ -29,6 +29,8 @@ from src.vibration_lab.data_loader import load_csv
 
 from src.vibration_lab.carpet_detector import compute_carpet_indicators
 
+from src.vibration_lab.looseness_analyzer import compute_looseness_indicators
+
 st.set_page_config(
     page_title="Predictive Maintenance Vibration Lab",
     layout="wide",
@@ -164,12 +166,21 @@ carpet_indicators = compute_carpet_indicators(
     magnitude_fft,
 )
 
-tab1, tab2, tab3, tab4 = st.tabs(
+rpm = float(df["rpm"].iloc[0]) if "rpm" in df.columns else 1800.0
+
+looseness_indicators = compute_looseness_indicators(
+    frequencies_fft,
+    magnitude_fft,
+    rpm=rpm,
+)
+
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
     [
-        "Time Signal",
-        "FFT Spectrum",
-        "Welch PSD",
-        "Spectral Carpet",
+    "Time Signal",
+    "FFT Spectrum",
+    "Welch PSD",
+    "Spectral Carpet",
+    "Structural Looseness",
     ]
 )
 
@@ -269,4 +280,80 @@ not a replacement for professional vibration analysis.
     col3.metric(
         "Peak-to-Floor Ratio",
         f"{carpet_indicators.peak_to_floor_ratio:.2f}"
+    )
+
+with tab5:
+    st.subheader("Structural Looseness Analyzer")
+
+    st.metric(
+        "Looseness Score",
+        f"{looseness_indicators.looseness_score:.1f} / 100"
+    )
+
+    st.markdown(
+        f"""
+**Spectrum Status:** {looseness_indicators.spectrum_status}
+"""
+    )
+
+    st.plotly_chart(
+        create_fft_figure(
+            frequencies_fft,
+            magnitude_fft,
+            title="FFT Spectrum Used for Looseness Scoring"
+        ),
+        use_container_width=True,
+    )
+
+    if looseness_indicators.looseness_score >= 50:
+        st.warning(
+            """
+Low-frequency harmonic behavior detected.
+
+This may indicate a looseness-like pattern,
+commonly associated with structural looseness,
+mechanical clearance or nonlinear vibration behavior.
+"""
+        )
+    else:
+        st.success(
+            """
+No strong looseness-like pattern detected.
+
+Low-frequency harmonic and sub-harmonic energy is not dominant in this signal.
+"""
+        )
+
+    st.markdown(
+        """
+### Interpretation
+
+The looseness score is based on low-frequency energy,
+harmonic content, sub-harmonic content and peak dominance.
+
+It is an explainable indicator designed for exploration,
+not a replacement for professional vibration analysis.
+"""
+    )
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric(
+        "Low Frequency Energy Ratio",
+        f"{looseness_indicators.low_frequency_energy_ratio:.3f}"
+    )
+
+    col2.metric(
+        "Harmonic Content Ratio",
+        f"{looseness_indicators.harmonic_content_ratio:.3f}"
+    )
+
+    col3.metric(
+        "Subharmonic Content Ratio",
+        f"{looseness_indicators.subharmonic_content_ratio:.3f}"
+    )
+
+    col4.metric(
+        "Peak Dominance Ratio",
+        f"{looseness_indicators.peak_dominance_ratio:.2f}"
     )
