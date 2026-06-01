@@ -233,6 +233,70 @@ looseness_indicators = compute_looseness_indicators(
     rpm=rpm,
 )
 
+def status_color(score):
+    if score >= 70:
+        return "🔴 High"
+
+    if score >= 40:
+        return "🟡 Moderate"
+
+    return "🟢 Low"
+
+
+overall_score = max(
+    carpet_indicators.carpet_score,
+    looseness_indicators.looseness_score,
+)
+
+if overall_score >= 70:
+    overall_status = "🔴 Inspection Recommended"
+
+elif overall_score >= 40:
+    overall_status = "🟡 Attention Required"
+
+else:
+    overall_status = "🟢 Healthy"
+
+
+st.subheader("Quick Diagnostic Summary")
+
+st.success(
+    f"Overall Machine Condition: {overall_status}"
+)
+
+col1, col2 = st.columns(2)
+
+col1.metric(
+    "Spectral Carpet Risk",
+    status_color(carpet_indicators.carpet_score),
+    f"{carpet_indicators.carpet_score:.1f} / 100",
+)
+
+col2.metric(
+    "Structural Looseness Risk",
+    status_color(looseness_indicators.looseness_score),
+    f"{looseness_indicators.looseness_score:.1f} / 100",
+)
+
+with st.expander("How to interpret this quick diagnosis"):
+    st.markdown(
+        """
+**Healthy**
+
+No strong fault pattern detected.
+
+**Attention Required**
+
+Moderate fault-related behavior detected.
+
+**Inspection Recommended**
+
+Strong vibration signature associated with one or more fault patterns.
+
+Use the detailed tabs to investigate the spectral evidence behind the diagnosis.
+"""
+    )
+
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
     [
     "Time Signal",
