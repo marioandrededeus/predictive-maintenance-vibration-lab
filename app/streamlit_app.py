@@ -27,8 +27,7 @@ from src.vibration_lab.visualization import (
 
 from src.vibration_lab.data_loader import load_csv
 
-from src.vibration_lab.carpet_detector import carpet_score
-
+from src.vibration_lab.carpet_detector import compute_carpet_indicators
 
 st.set_page_config(
     page_title="Predictive Maintenance Vibration Lab",
@@ -160,7 +159,7 @@ frequencies_psd, psd = welch_psd(
     fs,
 )
 
-carpet_score_value = carpet_score(
+carpet_indicators = compute_carpet_indicators(
     frequencies_fft,
     magnitude_fft,
 )
@@ -206,7 +205,13 @@ with tab4:
 
     st.metric(
         "Carpet Score",
-        f"{carpet_score_value:.1f} / 100"
+        f"{carpet_indicators.carpet_score:.1f} / 100"
+    )
+
+    st.markdown(
+        f"""
+**Spectrum Status:** {carpet_indicators.spectrum_status}
+"""
     )
 
     st.plotly_chart(
@@ -218,7 +223,7 @@ with tab4:
         use_container_width=True,
     )
 
-    if carpet_score_value >= 50:
+    if carpet_indicators.carpet_score >= 50:
         st.warning(
             """
 High broadband energy content detected.
@@ -247,4 +252,21 @@ and total spectral energy.
 It is an explainable indicator designed for exploration,
 not a replacement for professional vibration analysis.
 """
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "High Frequency Energy Ratio",
+        f"{carpet_indicators.high_frequency_energy_ratio:.3f}"
+    )
+
+    col2.metric(
+        "Spectral Flatness",
+        f"{carpet_indicators.spectral_flatness:.3f}"
+    )
+
+    col3.metric(
+        "Peak-to-Floor Ratio",
+        f"{carpet_indicators.peak_to_floor_ratio:.2f}"
     )
