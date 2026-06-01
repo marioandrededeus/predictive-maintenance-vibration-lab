@@ -79,19 +79,35 @@ st.sidebar.markdown("---")
 
 st.sidebar.markdown(
     """
-### Example datasets
+### About Project
 
-**Normal Condition**
+This open project explores how vibration analysis,
+signal processing and explainable machine learning
+can support predictive maintenance.
 
-Baseline vibration signal.
+Current fault patterns:
 
-**Spectral Carpet**
+• Spectral Carpet
+  (starved lubrication)
 
-Broadband high-frequency energy increase.
+• Structural Looseness
 
-**Structural Looseness**
+The goal is not only anomaly detection,
+but also interpretation of vibration signatures.
+"""
+)
 
-Low-frequency harmonic and sub-harmonic behavior.
+st.sidebar.markdown(
+    """
+### References
+
+Xu et al. (2024)
+
+Research on lubrication starvation detection
+using vibration analysis and machine learning.
+
+This project uses that work as inspiration
+for educational and exploratory purposes.
 """
 )
 
@@ -329,32 +345,27 @@ Low-frequency harmonic and sub-harmonic energy is not dominant in this signal.
         """
 ### Interpretation
 
-The looseness score is based on low-frequency energy,
-harmonic content, sub-harmonic content and peak dominance.
+The looseness score is based on higher-order harmonic content,
+sub-harmonic content and peak dominance.
 
 It is an explainable indicator designed for exploration,
 not a replacement for professional vibration analysis.
 """
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     col1.metric(
-        "Low Frequency Energy Ratio",
-        f"{looseness_indicators.low_frequency_energy_ratio:.3f}"
+        "Higher-Order Harmonic Ratio",
+        f"{looseness_indicators.higher_order_harmonic_ratio:.3f}"
     )
 
     col2.metric(
-        "Harmonic Content Ratio",
-        f"{looseness_indicators.harmonic_content_ratio:.3f}"
-    )
-
-    col3.metric(
         "Subharmonic Content Ratio",
         f"{looseness_indicators.subharmonic_content_ratio:.3f}"
     )
 
-    col4.metric(
+    col3.metric(
         "Peak Dominance Ratio",
         f"{looseness_indicators.peak_dominance_ratio:.2f}"
     )

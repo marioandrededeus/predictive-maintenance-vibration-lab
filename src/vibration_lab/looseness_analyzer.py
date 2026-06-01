@@ -7,8 +7,7 @@ import numpy as np
 
 @dataclass(frozen=True)
 class LoosenessIndicators:
-    low_frequency_energy_ratio: float
-    harmonic_content_ratio: float
+    higher_order_harmonic_ratio: float
     subharmonic_content_ratio: float
     peak_dominance_ratio: float
     looseness_score: float
@@ -28,78 +27,84 @@ def _band_energy(
     )
 
 
-def low_frequency_energy_ratio(
-    frequencies: np.ndarray,
-    magnitude: np.ndarray,
-    max_frequency: float = 200.0,
-) -> float:
-    total_energy = np.sum(magnitude ** 2)
-
-    if total_energy <= 0:
-        return 0.0
-
-    low_frequency_energy = _band_energy(
-        frequencies,
-        magnitude,
-        0.0,
-        max_frequency,
-    )
-
-    return float(low_frequency_energy / total_energy)
-
-
-def harmonic_content_ratio(
+def higher_order_harmonic_ratio(
     frequencies: np.ndarray,
     magnitude: np.ndarray,
     rotational_frequency_hz: float,
-    harmonics: tuple[int, ...] = (1, 2, 3),
     bandwidth_hz: float = 2.0,
+    eps: float = 1e-12,
 ) -> float:
-    total_energy = np.sum(magnitude ** 2)
+    """
+    Ratio between higher-order harmonic energy and 1x energy.
 
-    if total_energy <= 0:
-        return 0.0
+    Structural looseness often increases 2x and 3x components
+    relative to the fundamental rotational frequency.
+    """
 
-    harmonic_energy = 0.0
+    energy_1x = _band_energy(
+        frequencies,
+        magnitude,
+        rotational_frequency_hz - bandwidth_hz,
+        rotational_frequency_hz + bandwidth_hz,
+    )
 
-    for harmonic in harmonics:
-        center = harmonic * rotational_frequency_hz
+    energy_2x = _band_energy(
+        frequencies,
+        magnitude,
+        2.0 * rotational_frequency_hz - bandwidth_hz,
+        2.0 * rotational_frequency_hz + bandwidth_hz,
+    )
 
-        harmonic_energy += _band_energy(
-            frequencies,
-            magnitude,
-            center - bandwidth_hz,
-            center + bandwidth_hz,
-        )
+    energy_3x = _band_energy(
+        frequencies,
+        magnitude,
+        3.0 * rotational_frequency_hz - bandwidth_hz,
+        3.0 * rotational_frequency_hz + bandwidth_hz,
+    )
 
-    return float(harmonic_energy / total_energy)
+    return float(
+        (energy_2x + energy_3x) / (energy_1x + eps)
+    )
 
 
 def subharmonic_content_ratio(
     frequencies: np.ndarray,
     magnitude: np.ndarray,
     rotational_frequency_hz: float,
-    subharmonics: tuple[float, ...] = (0.5, 1.5),
     bandwidth_hz: float = 2.0,
+    eps: float = 1e-12,
 ) -> float:
-    total_energy = np.sum(magnitude ** 2)
+    """
+    Ratio between sub-harmonic energy and 1x energy.
 
-    if total_energy <= 0:
-        return 0.0
+    Sub-harmonic components such as 0.5x and 1.5x are commonly
+    associated with nonlinear vibration behavior.
+    """
 
-    subharmonic_energy = 0.0
+    energy_1x = _band_energy(
+        frequencies,
+        magnitude,
+        rotational_frequency_hz - bandwidth_hz,
+        rotational_frequency_hz + bandwidth_hz,
+    )
 
-    for subharmonic in subharmonics:
-        center = subharmonic * rotational_frequency_hz
+    energy_05x = _band_energy(
+        frequencies,
+        magnitude,
+        0.5 * rotational_frequency_hz - bandwidth_hz,
+        0.5 * rotational_frequency_hz + bandwidth_hz,
+    )
 
-        subharmonic_energy += _band_energy(
-            frequencies,
-            magnitude,
-            center - bandwidth_hz,
-            center + bandwidth_hz,
-        )
+    energy_15x = _band_energy(
+        frequencies,
+        magnitude,
+        1.5 * rotational_frequency_hz - bandwidth_hz,
+        1.5 * rotational_frequency_hz + bandwidth_hz,
+    )
 
-    return float(subharmonic_energy / total_energy)
+    return float(
+        (energy_05x + energy_15x) / (energy_1x + eps)
+    )
 
 
 def peak_dominance_ratio(
@@ -118,7 +123,7 @@ def classify_looseness_spectrum(
     score: float,
 ) -> str:
     if score >= 70:
-        return "Strong low-frequency harmonic pattern"
+        return "Strong looseness-like harmonic and sub-harmonic pattern"
 
     if score >= 40:
         return "Moderate looseness-like spectral behavior"
@@ -136,12 +141,7 @@ def compute_looseness_indicators(
 
     rotational_frequency_hz = rpm / 60.0
 
-    lf_ratio = low_frequency_energy_ratio(
-        frequencies,
-        magnitude,
-    )
-
-    harmonic_ratio = harmonic_content_ratio(
+    higher_order_ratio = higher_order_harmonic_ratio(
         frequencies,
         magnitude,
         rotational_frequency_hz,
@@ -159,22 +159,30 @@ def compute_looseness_indicators(
 
     dominance_score = min(
         1.0,
-        dominance_ratio / 100.0,
+        dominance_ratio / 1500.0,
+    )
+
+    normalized_higher_order = min(
+        1.0,
+        higher_order_ratio / 0.50,
+    )
+
+    normalized_subharmonic = min(
+        1.0,
+        subharmonic_ratio / 0.15,
     )
 
     score = min(
         100.0,
         100.0 * (
-            0.35 * lf_ratio
-            + 0.35 * harmonic_ratio
-            + 0.20 * subharmonic_ratio
-            + 0.10 * dominance_score
+            0.50 * normalized_higher_order
+            + 0.35 * normalized_subharmonic
+            + 0.15 * dominance_score
         )
     )
 
     return LoosenessIndicators(
-        low_frequency_energy_ratio=lf_ratio,
-        harmonic_content_ratio=harmonic_ratio,
+        higher_order_harmonic_ratio=higher_order_ratio,
         subharmonic_content_ratio=subharmonic_ratio,
         peak_dominance_ratio=dominance_ratio,
         looseness_score=score,
