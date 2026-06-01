@@ -23,6 +23,8 @@ from src.vibration_lab.visualization import (
     create_time_signal_figure,
     create_fft_figure,
     create_psd_figure,
+    create_carpet_annotated_fft_figure,
+    create_looseness_annotated_fft_figure,
 )
 
 from src.vibration_lab.data_loader import load_csv
@@ -226,11 +228,10 @@ with tab4:
     )
 
     st.plotly_chart(
-        create_fft_figure(
-            frequencies_fft,
-            magnitude_fft,
-            title="FFT Spectrum Used for Carpet Scoring"
-        ),
+        create_carpet_annotated_fft_figure(
+    frequencies_fft,
+    magnitude_fft,
+    ),
         use_container_width=True,
     )
 
@@ -297,10 +298,10 @@ with tab5:
     )
 
     st.plotly_chart(
-        create_fft_figure(
-            frequencies_fft,
-            magnitude_fft,
-            title="FFT Spectrum Used for Looseness Scoring"
+        create_looseness_annotated_fft_figure(
+        frequencies_fft,
+        magnitude_fft,
+        rpm=rpm,
         ),
         use_container_width=True,
     )
