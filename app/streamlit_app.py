@@ -107,6 +107,50 @@ for educational and exploratory purposes.
 """
 )
 
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    """
+### Data Requirements
+
+**Required columns**
+
+• timestamp
+
+• acceleration
+
+**Optional columns**
+
+• rpm
+
+• velocity
+
+• axis
+
+• label
+
+**Recommended units**
+
+• timestamp → seconds
+
+• acceleration → g or m/s²
+
+• rpm → rotational speed
+"""
+)
+
+st.sidebar.markdown(
+    """
+### Example CSV
+
+```text
+timestamp,acceleration,rpm
+0.000,0.012,1800
+0.001,0.018,1800
+0.002,-0.004,1800
+"""
+)
+
 uploaded_file = None
 
 if dataset == "Upload CSV":
