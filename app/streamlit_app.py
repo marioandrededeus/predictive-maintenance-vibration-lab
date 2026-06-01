@@ -33,6 +33,8 @@ from src.vibration_lab.carpet_detector import compute_carpet_indicators
 
 from src.vibration_lab.looseness_analyzer import compute_looseness_indicators
 
+from src.vibration_lab.time_features import compute_time_domain_features
+
 st.set_page_config(
     page_title="Predictive Maintenance Vibration Lab",
     layout="wide",
@@ -40,32 +42,26 @@ st.set_page_config(
 
 st.title("Predictive Maintenance Vibration Lab")
 
-st.info(
+with st.expander('Analyze vibration signals using:', expanded = False):
+    st.info(
+        """
+
+    • Time-domain indicators
+    (RMS, Crest Factor, Kurtosis)
+
+    • FFT Spectrum
+
+    • Welch PSD
+
+    • Spectral Carpet Detection
+
+    • Structural Looseness Detection
+
+    Use the example datasets or upload your own vibration data.
     """
-This project explores how vibration analysis, signal processing and
-machine learning can support predictive maintenance in rotating machinery.
+    )
 
-Current examples include:
-
-• Normal operating condition
-
-• Spectral carpet patterns associated with lubrication starvation
-
-• Structural looseness characterized by harmonic and sub-harmonic behavior
-
-You can use the example datasets or upload your own vibration signal.
-"""
-)
-
-st.markdown(
-    """
-An open project exploring vibration analysis,
-signal processing and explainable machine learning
-for predictive maintenance.
-"""
-)
-
-dataset = st.sidebar.selectbox(
+dataset = st.sidebar.radio(
     "Choose a dataset",
     [
         "Normal Condition",
@@ -166,6 +162,7 @@ else:
 
 time = df["timestamp"].values
 signal = df["acceleration"].values
+time_features = compute_time_domain_features(signal)
 
 fs = infer_sampling_rate(time)
 
@@ -208,7 +205,34 @@ with tab1:
             time,
             signal,
         ),
-        use_container_width=True,
+        width="stretch",
+    )
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    col1.metric(
+        "RMS",
+        f"{time_features.rms:.4f}"
+    )
+
+    col2.metric(
+        "Peak",
+        f"{time_features.peak:.4f}"
+    )
+
+    col3.metric(
+        "Peak-to-Peak",
+        f"{time_features.peak_to_peak:.4f}"
+    )
+
+    col4.metric(
+        "Crest Factor",
+        f"{time_features.crest_factor:.2f}"
+    )
+
+    col5.metric(
+        "Kurtosis",
+        f"{time_features.kurtosis:.2f}"
     )
 
 with tab2:
@@ -217,7 +241,7 @@ with tab2:
             frequencies_fft,
             magnitude_fft,
         ),
-        use_container_width=True,
+        width="stretch",
     )
 
 with tab3:
@@ -226,7 +250,7 @@ with tab3:
             frequencies_psd,
             psd,
         ),
-        use_container_width=True,
+        width="stretch",
     )
 
 with tab4:
@@ -248,7 +272,7 @@ with tab4:
     frequencies_fft,
     magnitude_fft,
     ),
-        use_container_width=True,
+        width="stretch",
     )
 
     if carpet_indicators.carpet_score >= 50:
@@ -319,7 +343,7 @@ with tab5:
         magnitude_fft,
         rpm=rpm,
         ),
-        use_container_width=True,
+        width="stretch",
     )
 
     if looseness_indicators.looseness_score >= 50:
