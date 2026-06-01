@@ -163,4 +163,11 @@ def create_looseness_annotated_fft_figure(
                 annotation_position="top",
             )
 
+    fig.update_xaxes(
+        range=[
+            0,
+            min(200.0, max_frequency)
+        ]
+    )
+
     return fig
